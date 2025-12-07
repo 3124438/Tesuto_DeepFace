@@ -5,7 +5,7 @@ from deepface import DeepFace
 import numpy as np
 
 # ページ設定
-st.set_page_config(page_title="DeepFace Emoji & Text", layout="centered")
+st.set_page_config(page_title="DeepFace Mini", layout="centered")
 
 st.title("DeepFace 完成版 (Tesuto)")
 st.write("顔文字とローマ字で、今の表情を表示します！")
@@ -30,7 +30,7 @@ class EmotionProcessor(VideoTransformerBase):
     def transform(self, frame):
         img = frame.to_ndarray(format="bgr24")
         
-        # 10フレームに1回分析（軽量化）
+        # 10フレームに1回分析
         self.frame_count += 1
         if self.frame_count % 10 == 0:
             try:
@@ -45,34 +45,33 @@ class EmotionProcessor(VideoTransformerBase):
                 pass
 
         # 辞書からデータを取得
-        # データがない場合は "?" を表示
         data = EMOTION_DATA.get(self.last_emotion_key, ("?", "?"))
-        kaomoji = data[0] # 顔文字
-        romaji  = data[1] # ローマ字
+        kaomoji = data[0]
+        romaji  = data[1]
 
-        # --- 描画パート ---
+        # --- 描画パート（サイズを半分に調整） ---
         
-        # 1行目：顔文字（大きく）
-        # 黒いフチ
-        cv2.putText(img, kaomoji, (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 
-                    2.0, (0, 0, 0), 8)
-        # 白い文字
-        cv2.putText(img, kaomoji, (30, 80), cv2.FONT_HERSHEY_SIMPLEX, 
-                    2.0, (255, 255, 255), 3)
+        # 1行目：顔文字
+        # fontScale: 2.0 -> 1.0 (半分！)
+        # 座標: (30, 80) -> (20, 40) (少し左上に)
+        cv2.putText(img, kaomoji, (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 
+                    1.0, (0, 0, 0), 4) # フチも細く
+        cv2.putText(img, kaomoji, (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 
+                    1.0, (255, 255, 255), 2)
 
-        # 2行目：ローマ字（少し小さく、下に配置）
-        # 黒いフチ
-        cv2.putText(img, romaji, (30, 140), cv2.FONT_HERSHEY_SIMPLEX, 
-                    1.2, (0, 0, 0), 6)
-        # 黄色の文字（目立つように！）
-        cv2.putText(img, romaji, (30, 140), cv2.FONT_HERSHEY_SIMPLEX, 
-                    1.2, (0, 255, 255), 2)
+        # 2行目：ローマ字
+        # 顔文字に合わせて少し小さく (1.2 -> 0.7)
+        # 座標: (30, 140) -> (20, 70) (顔文字のすぐ下に)
+        cv2.putText(img, romaji, (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 
+                    0.7, (0, 0, 0), 4)
+        cv2.putText(img, romaji, (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 
+                    0.7, (0, 255, 255), 2)
 
         return img
 
 # メイン処理
 webrtc_streamer(
-    key="deepface-final", 
+    key="deepface-mini", 
     video_processor_factory=EmotionProcessor,
     media_stream_constraints={"video": True, "audio": False},
     rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
